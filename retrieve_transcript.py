@@ -39,7 +39,7 @@ class transcripts:
         url_string = f'https://transcripts.foreverdreaming.org/viewtopic.php?f=1024&t={id}'
         page = requests.get(url_string)
         soup = BeautifulSoup(page.content, 'html.parser')
-        return soup.contents
+        return soup.contents[2]
 
     def all_transcripts_on_page(self, page_url):
         '''
@@ -54,20 +54,34 @@ class transcripts:
             transcripts_on_page[title_id[0]] = self.get_transcript(title_id)
         return transcripts_on_page
 
+    def season_one_ids(self):
+        page_contents = self.get_page_contents(self.all_urls[0])
+        episodes_on_page = self.episodes_per_page(page_contents)[:13]
+        return episodes_on_page
+
+    def transcripts_by_season(self, episode_ids):
+        transcripts = {}
+        for title, episode_id in episode_ids:
+            transcripts[title] = self.get_transcript(episode_id)
+        return transcripts
+
+    #def 
+
 ####
 mad_men = transcripts(mm_url)
 #page1_contents = mad_men.get_page_contents(mad_men.all_urls[0])
+s1_ids = mad_men.season_one_ids()
+s1_transcripts = mad_men.transcripts_by_season(s1_ids)
+test_transcript = s1_transcripts['01x12 - Nixon vs. Kennedy']
 
-'''
 
 
-for url_string in mad_men.all_urls:
-    page_contents = mad_men.get_page_contents(url_string)
-    ids_on_page = mad_men.ids_per_page(page_contents)
-    
-    transcripts_on_page = []
+def process_transcript(raw_transcript):
+    nice_and_clean = raw_transcript.findAll('p')[1:-3]
+    list_of_sentences = [i.text for i in nice_and_clean]
+    return [i.rstrip() for i in list_of_sentences]
 
-    for episode_id in ids_on_page:
-        transcripts_on_page.append(mad_men.get_transcript(episode_id))
-'''
+good = process_transcript(test_transcript)
+first_line = good[0]
+big_string = ' '.join(good).replace("\'", '')
 
