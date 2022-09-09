@@ -26,8 +26,11 @@ names = {
 'betty' : ['betty','bets','birdy'],
 'joan' : ['joan','harris','holloway'],
 'crane' : ['harry', 'crane'],
-'kinsey' : ['paul','kinsey']
+'kinsey' : ['paul','kinsey'],
+'liquor' : ['vodka','bourbon','rye','gin','rum','vermouth','whiskey','tequila','beer','martini',
+            'old fashioned','mojito','wine']
 }
+
 
 
 class mad_men_words:
@@ -50,11 +53,19 @@ class mad_men_words:
 
 class mad_men_season(mad_men_words):
     def __init__(self, season_episodes):
+        '''
+        Give it a list of strings. Those strings should be Mad Men episode titles with the
+        S0xE0 prefix and underscores
+        '''
         super().__init__()
         self.season_episodes = season_episodes
         self.word_counts = self.season_word_counts(season_episodes)
     
     def search_wordcount(self, terms):
+        part_scores =  [i for i in self.word_counts if i[0] in terms]
+        return sum([i[1] for i in part_scores])
+
+    def search_wordcount_parts(self, terms):
         return [i for i in self.word_counts if i[0] in terms]
 
     def name_counts_per_season(self):
@@ -65,11 +76,16 @@ class mad_men_season(mad_men_words):
         return name_book
 ####
 
+mm = mad_men_words()
 
-s1_obj = mad_men_season(seasons['s1_episodes'])
-#s1_obj.search_wordcount(s1_obj.char_names['betty'])
+book_of_name_counts = {}
 
+for k,v in mm.seasons.items():
+    book_of_name_counts[k] = mad_men_season(v).name_counts_per_season()
 
+mm_obj = mad_men_words()
+season1 = mm_obj.seasons['s1_episodes']
+season2 = mm_obj.seasons['s2_episodes']
 
 '''
 for title in s1_episodes:
@@ -80,11 +96,18 @@ for title in s1_episodes:
 s1_counter = Counter(season_1_words.split(' '))
 season_one_word_counts = s1_counter.most_common()
 
-
+mm_obj = mad_men_words()
 season1 = mm_obj.seasons['s1_episodes']
 season2 = mm_obj.seasons['s2_episodes']
 #season_word_counts(season_transcripts)
 
 woah = mm_obj.season_word_counts(season1)
 awesome = mm_obj.season_word_counts(season2)
+
+s1_obj = mad_men_season(seasons['s1_episodes'])
+#s1_obj.search_wordcount(s1_obj.char_names['betty'])
+
+s2_obj = mad_men_season(seasons['s2_episodes'])
+
+rog_names = s1_obj.search_wordcount(s1_obj.char_names['roger'])
 '''

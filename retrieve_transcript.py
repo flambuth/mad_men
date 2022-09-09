@@ -28,7 +28,7 @@ class transcripts:
         '''
         blob = page_row.find(class_='topictitle', href=True)
         parse_this = blob['href']
-        return (blob.text, parse_this[25:30])
+        return (blob.text.replace(' ','_'), parse_this[25:30])
 
     def episodes_per_page(self, page_contents):
         '''
@@ -57,6 +57,9 @@ def process_transcript(raw_transcript):
     return [i.rstrip().replace("\'", '').replace("\n",'') for i in list_of_sentences]
 
 def second_processing(fixed_transcript):
+    '''
+    Let's not use this one to save. Add this to the trascript_parsing module
+    '''
     stops = set(stopwords.words('english'))
     
     big_string = ' '.join(fixed_transcript).replace("\'", '').replace("\n",'')
@@ -67,37 +70,57 @@ def second_processing(fixed_transcript):
     return good_words
 
 def process_all_transcripts_on_page(page_of_transcripts):
+    '''
+    Takes a dict-like object as input. Uses the keys, which are episode_titles
+    This iterates through each of the keys, giving it to process_transcript()
+    This will change in place the dictionary that is given as a parameter.
+    '''
+    for k in page_of_transcripts.keys():
+        page_of_transcripts[k] = process_transcript(page_of_transcripts[k])
+    return page_of_transcripts
+
+def process_all_transcripts_on_pageOLD(page_of_transcripts):
     page_of_wordbags = {}
     for k in page_of_transcripts.keys():
         page_of_transcripts[k] = process_transcript(page_of_transcripts[k])
+        #has a second processing step. THIS IS OLD WAY!
         page_of_wordbags[k.replace(' ','_')] = second_processing(page_of_transcripts[k])
     return page_of_wordbags
 
-def save_all_transcripts(list_of_dict_bags):
-    for libro in list_of_dict_bags:
-        for k,v in libro.items():
-            with open(k, 'w') as archivo:
-                archivo.write(' '.join(v))
-    print('all transcripts are in text files in that one folder')
+
 
 def complete_mad_men_scraping():
     mad_men = transcripts(mm_url)
+
     page1_index = mad_men.episodes_per_page(mad_men.get_page_contents(mad_men.all_urls[0]))
     page1_transcripts = mad_men.transcripts_from_ids(page1_index)
 
     page2_index = mad_men.episodes_per_page(mad_men.get_page_contents(mad_men.all_urls[1]))
-    page3_index = mad_men.episodes_per_page(mad_men.get_page_contents(mad_men.all_urls[2]))
-    page4_index = mad_men.episodes_per_page(mad_men.get_page_contents(mad_men.all_urls[3]))
-
     page2_transcripts = mad_men.transcripts_from_ids(page2_index)
+    
+    page3_index = mad_men.episodes_per_page(mad_men.get_page_contents(mad_men.all_urls[2]))
     page3_transcripts = mad_men.transcripts_from_ids(page3_index)
+    
+    page4_index = mad_men.episodes_per_page(mad_men.get_page_contents(mad_men.all_urls[3]))
     page4_transcripts = mad_men.transcripts_from_ids(page4_index)
-
-    list_of_dict_bags = [process_all_transcripts_on_page(i) for i in list_of_dicts]
-
+    
     list_of_dicts = [page1_transcripts, page2_transcripts, page3_transcripts, page4_transcripts]
+    list_of_dict_bags = [process_all_transcripts_on_page(i) for i in list_of_dicts]
+    
+    #save_all_transcripts(list_of_dict_bags)
+    return(list_of_dict_bags)
 
-    save_all_transcripts()
+def save_all_transcripts(list_of_dict_bags):
+    for libro in list_of_dict_bags:
+        for episode_title, transcript in libro.items():
+            with open(f'transcripts/{episode_title}', 'w') as archivo:
+                for line in transcript:
+                    archivo.write("%s\n" % line)
+    print('all transcripts are in text files in that one folder')
+
+#Use this to fill a directory call transcripts with all the transcripts from the site:
+#https://transcripts.foreverdreaming.org/viewforum.php?f=1024
+#save_all_transcripts(complete_made_men_scraping())
 
 ####
 '''
@@ -116,6 +139,12 @@ list_of_dicts = [page1_transcripts, page2_transcripts, page3_transcripts, page4_
 
 'ha'
 
+def save_complete_scraping():
+    with open(r'transcripts/sales.txt', 'w') as fp:
+    for item in names:
+        # write each item on a new line
+        fp.write("%s\n" % item)
+    print('Done')
 
 def process_transcript(raw_transcript):
     nice_and_clean = raw_transcript.findAll('p')[1:-3]
