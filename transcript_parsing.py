@@ -149,17 +149,21 @@ def season_name_drop_histogram(df):
     fig.update_layout(
         yaxis_title = 'Name Drop Frequency',
         xaxis_title = 'Seasons',
-        legend_title = 'Characters',
-        title_text = 'Times a Mad Men Character is Mentioned',
+        legend_title = '<b>Characters</b>',
+        title_text = 'Times a <b>MAD MEN</b> Character is Mentioned',
         template = 'plotly_dark',
         title_font_color = 'red',
+        legend_title_font_color = 'red',
         
     )
 
     fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(showgrid=False)
+    fig.update_traces(hovertemplate = 'SEASON: %{x} <br>Name Drops: %{y}')
     return fig
+
+good_plot = season_name_drop_histogram(lean_cast)
 
 
 df = season_name_scores_df()
 lean_cast = df.drop(columns=['Don','Kinsey','Crane'])
+hovertemplate = 'GDP: %{x} <br>Life Expectancy: %{y}'
