@@ -1,6 +1,6 @@
 import string
 from collections import Counter
-from tkinter import Grid
+#from tkinter import Grid
 from nltk.corpus import stopwords
 # This allows to create individual objects from a bog of words
 from nltk.tokenize import word_tokenize
