@@ -19,6 +19,7 @@ Python packages
 
 ### Executing program
 * Retrieve Transcripts
+
 retrieve_transcript.complete_mad_men_scraping will make the requests to the target URL for each episode
 This returns a list with 7 elemments. Each element is a dictionary. Keys are episode titles, values are 
 the transcripts as list of sentences.
@@ -28,6 +29,7 @@ cc = complete_mad_men_scraping()
 ```
 
 * Save Transcripts
+
 Takes the object returned complete_mad_men_scraping as a parameter.
 Saves all transcripts to the 'transcripts' directory in the current working directory.
 ```
