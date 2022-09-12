@@ -1,10 +1,13 @@
-import retrieve_transcript
+import string
 from collections import Counter
+from tkinter import Grid
 from nltk.corpus import stopwords
 # This allows to create individual objects from a bog of words
 from nltk.tokenize import word_tokenize
 import os
-
+import pandas as pd
+import plotly.express as px
+import plotly.io as pio
 
 seasons = {
 's1_episodes' : os.listdir('transcripts/')[:13],
@@ -16,13 +19,11 @@ seasons = {
 's7_episodes' : os.listdir('transcripts/')[77:],
 }
 
-
-
 names = {
-'don' : ['don','donald','draper'],
+'don' : ['don','donald', 'draper'],
 'peggy' : ['peggy','olson','margaret'], 
 'pete'  : ['pete','peter','campbell'],
-'roger' : ['roger','sterling'],
+'roger' : ['roger','rog', 'stirling'],
 'betty' : ['betty','bets','birdy'],
 'joan' : ['joan','harris','holloway'],
 'crane' : ['harry', 'crane'],
@@ -31,83 +32,134 @@ names = {
             'old fashioned','mojito','wine']
 }
 
+def parse_transcript(episode_title):
+    '''
+    Given a Mad Men episode title string, returns a list of sentences
+    Each sentence is lower case and has no punctuation
+    Each sentence ought to be able to be extended to one big sting with whitespace in between
+    '''
+    with open(f'transcripts/{episode_title}') as f:
+        episode_sentences = f.read().splitlines()
 
+    good_episode_sentences = [i.lower().translate(
+            str.maketrans('','', string.punctuation)
+        ).rstrip().lstrip() for i in episode_sentences]
 
-class mad_men_words:
-    def __init__(self):
-        self.episode_list = os.listdir('transcripts/')
-        self.char_names = names
-        self.seasons = seasons
+    return good_episode_sentences
 
-    def season_word_counts(self, season):
-        season_words = 'test'
+def collect_words_in_script(episode_title):
+    script_words = 'test'
+    sentences = parse_transcript(episode_title)
 
-        for title in season:
-            with open(f'transcripts/{title}') as f:
-                big_word = f.readlines()
-                season_words += big_word[0] 
-
-        s1_counter = Counter(season_words.split(' '))
-        count_of_words = s1_counter.most_common()
-        return count_of_words
-
-class mad_men_season(mad_men_words):
-    def __init__(self, season_episodes):
-        '''
-        Give it a list of strings. Those strings should be Mad Men episode titles with the
-        S0xE0 prefix and underscores
-        '''
-        super().__init__()
-        self.season_episodes = season_episodes
-        self.word_counts = self.season_word_counts(season_episodes)
+    for sentence in sentences:
+        script_words += f' {sentence}'
     
-    def search_wordcount(self, terms):
-        part_scores =  [i for i in self.word_counts if i[0] in terms]
-        return sum([i[1] for i in part_scores])
+    return script_words
 
-    def search_wordcount_parts(self, terms):
-        return [i for i in self.word_counts if i[0] in terms]
+def count_words_in_script(episode_title):
+    script_words = collect_words_in_script(episode_title).split(' ')
+    word_counter = Counter(script_words)
+    return word_counter.most_common()
 
-    def name_counts_per_season(self):
+def namedrops_in_script(episode_title, name):
+    name_parts = names[name]
+    word_counts = count_words_in_script(episode_title)
+    return [word for word in word_counts if word[0] in name_parts]
+
+def all_names_in_script(episode_title):
+    name_book = {}
+    for name in names:
+        name_book[name] = namedrops_in_script(episode_title, name)
+    return name_book
+
+class mad_men_transcript:
+    def __init__(self, episode_title):
+        self.title = episode_title
+        self.lines = parse_transcript(self.title)
+        self.words = collect_words_in_script(self.title)
+        self.word_counts = count_words_in_script(self.title)
+        self.char_names = names
+
+    def namedrops_in_script(self, name):
+        name_parts = self.char_names[name]
+        word_counts = count_words_in_script(self.title)
+        return [word for word in word_counts if word[0] in name_parts]
+
+    def all_names_in_script(self):
         name_book = {}
-
-        for name in self.char_names:
-            name_book[name] = self.search_wordcount(self.char_names[name])
+        for name in names:
+            name_book[name] = self.namedrops_in_script(name)
         return name_book
+
+    def name_score_in_script(self):
+        scores = {}
+        for name in self.char_names:
+            add_these = self.all_names_in_script()[name]
+            scores[name] = sum([i[1] for i in add_these])
+        return scores
 ####
 
-mm = mad_men_words()
+class mad_men_season:
+    def __init__(self, season):
+        '''
+        season should be a list of episode_title strings
+        '''
+        self.season = season
 
-book_of_name_counts = {}
+    def season_word_counts(self):
+        season_counts = {
+            'don': 0,
+            'peggy': 0,
+            'pete': 0,
+            'roger': 0,
+            'betty': 0,
+            'joan': 0,
+            'crane': 0,
+            'kinsey': 0,
+            'liquor': 0
+        }
 
-for k,v in mm.seasons.items():
-    book_of_name_counts[k] = mad_men_season(v).name_counts_per_season()
+        for episode in self.season:
+            episode_scores = mad_men_transcript(episode).name_score_in_script()
+            for name in season_counts.keys():
+                season_counts[name] += episode_scores[name]
+        
+        return season_counts
 
-mm_obj = mad_men_words()
-season1 = mm_obj.seasons['s1_episodes']
-season2 = mm_obj.seasons['s2_episodes']
+def all_seasons():
+    season_catalog = {}
+    for season in seasons.keys():
+        season_episodes = seasons[season]
+        season_obj = mad_men_season(season_episodes)
+        season_catalog[season] = season_obj.season_word_counts()
+    return season_catalog
 
-'''
-for title in s1_episodes:
-    with open(f'transcripts/{title}') as f:
-        big_word = f.readlines()
-        season_1_words += big_word[0] 
 
-s1_counter = Counter(season_1_words.split(' '))
-season_one_word_counts = s1_counter.most_common()
+def season_name_scores_df():
+    season_scores = all_seasons()
+    df = pd.DataFrame(season_scores).T
+    df.columns = [i.capitalize() for i in df.columns]
+    df.index = [i[:2] for i in df.index]
+    return df
 
-mm_obj = mad_men_words()
-season1 = mm_obj.seasons['s1_episodes']
-season2 = mm_obj.seasons['s2_episodes']
-#season_word_counts(season_transcripts)
+def season_name_drop_histogram(df):
+    #df = season_name_scores_df()
+    fig = px.line(df)
+    #fig.show()
+    fig.update_layout(
+        yaxis_title = 'Name Drop Frequency',
+        xaxis_title = 'Seasons',
+        legend_title = 'Characters',
+        title_text = 'Times a Mad Men Character is Mentioned',
+        template = 'plotly_dark',
+        title_font_color = 'red',
+        
+    )
 
-woah = mm_obj.season_word_counts(season1)
-awesome = mm_obj.season_word_counts(season2)
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+    return fig
 
-s1_obj = mad_men_season(seasons['s1_episodes'])
-#s1_obj.search_wordcount(s1_obj.char_names['betty'])
 
-s2_obj = mad_men_season(seasons['s2_episodes'])
-
-rog_names = s1_obj.search_wordcount(s1_obj.char_names['roger'])
-'''
+df = season_name_scores_df()
+lean_cast = df.drop(columns=['Don','Kinsey','Crane'])
