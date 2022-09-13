@@ -161,9 +161,10 @@ def season_name_drop_histogram(df):
     fig.update_traces(hovertemplate = 'SEASON: %{x} <br>Name Drops: %{y}')
     return fig
 
+df = season_name_scores_df()
+lean_cast = df.drop(columns=['Don','Kinsey','Crane'])
 good_plot = season_name_drop_histogram(lean_cast)
 
 
-df = season_name_scores_df()
-lean_cast = df.drop(columns=['Don','Kinsey','Crane'])
-hovertemplate = 'GDP: %{x} <br>Life Expectancy: %{y}'
+
+#hovertemplate = 'GDP: %{x} <br>Life Expectancy: %{y}'
