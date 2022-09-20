@@ -54,7 +54,7 @@ def bag_of_words(no_punkt):
 def remove_stopwords(word_bag):
     return [i for i in word_bag if i not in stopWords]
 
-def from_episode_title(episode_title):
+def episode_words(episode_title):
     '''
     Encapsulating function that takes an episode title and returns a cleaned bag of usable words for text mining
     '''
@@ -63,6 +63,28 @@ def from_episode_title(episode_title):
     wordbag = bag_of_words(nopunkt)
     return remove_stopwords(wordbag)
 
+
+def season_words(season):
+    '''
+    Use the seasons dictionary format 's#_episodes
+    '''
+    titles = seasons[season]
+    season_words = []
+    for title in titles:
+        season_words += episode_words(title)
+    return season_words
+
+def season_word_counts(season):
+    words = season_words(season)
+    word_counter = Counter(words)
+    return word_counter
+
+
+def mad_men_season_counts():
+    mm_book = {}
+    for i in seasons.keys():
+        mm_book[i] = season_word_counts(i)
+    return mm_book
 
 '''
 def remove_extra_white(good_transcript):
