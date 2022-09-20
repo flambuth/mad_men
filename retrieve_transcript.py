@@ -6,6 +6,14 @@ import os
 
 
 mm_url = 'https://transcripts.foreverdreaming.org/viewforum.php?f=1024'
+
+def get_page_contents(self, page_url):
+        page = requests.get(page_url) 
+        soup = BeautifulSoup(page.content, 'html.parser')
+        table =  soup.find(id='pagecontent')
+        #return table_contents.findAll('h3')[1:]
+        return table
+
 class transcripts:
 
     def __init__(self, url):
