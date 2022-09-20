@@ -1,8 +1,14 @@
-import transcript_parsing as tp
 import os
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize
 import string
+from collections import Counter
+
+#lets keep the apostrophes. This will make contracts remain. Stupid, since they are stop words
+#i hope it makes it easier to identify those stop words! its not stupid!
+#string.punctuation = string.punctuation.replace("'","")
+
+stopWords = set(stopwords.words('english'))
 
 episodes_list = os.listdir('transcripts/')
 episodes_list.sort()
@@ -27,46 +33,43 @@ names = {
 'crane' : ['harry', 'crane'],
 'kinsey' : ['paul','kinsey'],
 'liquor' : ['vodka','bourbon','rye','gin','rum','vermouth','whiskey','tequila','beer','martini',
-            'old fashioned','mojito','wine']
-}
+            'old fashioned','mojito','wine']}
 
 def raw_transcript(episode_title):
     with open(f'transcripts/{episode_title}') as f:
         episode_sentences = f.read().splitlines()
     return episode_sentences
 
-def first_parse(raw_transcript):
-
-
-    good_episode_sentences = [i.lower().translate(str.maketrans(string.punctuation,' '*len(string.punctuation))).rstrip().lstrip() 
+def remove_punctuation(raw_transcript):
+    no_punkt = [i.lower().translate(str.maketrans(string.punctuation,' '*len(string.punctuation))).rstrip().lstrip() 
                         for i in raw_transcript]
-    return good_episode_sentences
+    return [word_tokenize(i) for i in no_punkt]
+
+def bag_of_words(no_punkt):
+    blob = []
+    for i in no_punkt:
+        blob += i
+    return blob
+
+def remove_stopwords(word_bag):
+    return [i for i in word_bag if i not in stopWords]
+
+def from_episode_title(episode_title):
+    '''
+    Encapsulating function that takes an episode title and returns a cleaned bag of usable words for text mining
+    '''
+    raw = raw_transcript(episode_title)
+    nopunkt = remove_punctuation(raw)
+    wordbag = bag_of_words(nopunkt)
+    return remove_stopwords(wordbag)
 
 
+'''
 def remove_extra_white(good_transcript):
     better_transcript = []
-
     for sentence in good_transcript:
         with_space_list = sentence.split(' ')
         no_space_list = ' '.join([i for i in with_space_list if i != ''])
         better_transcript.append(no_space_list)
     return better_transcript
-
-def so_far(episode_title):
-    raw = raw_transcript(episode_title)
-    first = first_parse(raw)
-    good = remove_extra_white(first)
-    return good
-
-'''
-episode_title = seasons['s6_episodes'][6]
-episode_raw_transcript = parse_transcript(episode_title)
-good_episode_sentences = [i.lower().translate(str.maketrans(string.punctuation,' '*len(string.punctuation))).rstrip().lstrip() 
-                        for i in episode_raw_transcript]
-    good_transcript = []
-
-    for sentence in raw_transcript:
-        
-        good_transcript.append()
-
 '''
