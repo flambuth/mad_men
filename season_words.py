@@ -3,6 +3,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import string
 from collections import Counter
+import pandas as pd
 
 stopWords = stopwords.words('english')
 extra_stops = [
@@ -68,6 +69,40 @@ names = {
 'liquor' : ['vodka','bourbon','rye','gin','rum','vermouth','whiskey','tequila','beer','martini',
             'old fashioned','mojito','wine']}
 
+ginsberg = [
+'05x03_-_Tea_Leaves',
+ '05x04_-_Mystery_Date',
+ '05x06_-_Far_Away_Places',
+ '05x07_-_At_the_Codfish_Ball',
+ '05x08_-_Lady_Lazarus',
+ '05x09_-_Dark_Shadows',
+ '05x10_-_Christmas_Waltz',
+ '05x11_-_The_Other_Woman',
+ '05x13_-_The_Phantom',
+ '06x01_-_The_Doorway,_Part_1',
+ '06x02_-_The_Doorway,_Part_2',
+ '06x03_-_Collaborators',
+ '06x04_-_To_Have_And_To_Hold',
+ '06x05_-_The_Flood',
+ '06x06_-_For_Immediate_Release',
+ '06x07_-_Man_With_A_Plan',
+ '06x08_-_The_Crash',
+ '06x09_-_The_Better_Half',
+ '06x10_-_A_Tale_of_Two_Cities',
+ '06x11_-_Favors',
+ '06x12_-_The_Quality_of_Mercy',
+ '06x13_-_In_Care_Of',
+ '07x01_-_Time_Zones',
+ "07x02_-__A_Day's_Work",
+ '07x03_-_Field_Trip',
+ '07x04_-_The_Monolith',
+ '07x05_-_The_Runaways',
+]
+
+
+
+
+
 def raw_transcript(episode_title):
     with open(f'transcripts/{episode_title}') as f:
         episode_sentences = f.read().splitlines()
@@ -105,6 +140,18 @@ def episode_words_ALL(episode_title):
     wordbag = bag_of_words(nopunkt)
     return wordbag
 
+class episode_stuff:
+    '''
+    Uses all the episode level functions smushed into one object.
+    '''
+    def __init__(self, episode_title) -> None:
+        self.title = episode_title
+        self.raw = raw_transcript(episode_title)
+        self.no_punkt = remove_punctuation(self.raw)
+        self.word_bag = bag_of_words(self.no_punkt)
+        self.word_bag_no_stops = remove_stopwords(self.word_bag)
+        self.word_counter = Counter(self.word_bag_no_stops)
+
 def season_words_ALL(season):
     '''
     Use the seasons dictionary format 's#'
@@ -114,6 +161,7 @@ def season_words_ALL(season):
     for title in titles:
         season_words += episode_words_ALL(title)
     return len(season_words)
+
 
 def mad_men_season_word_totals():
     mm_book = {}
@@ -145,16 +193,46 @@ def mad_men_season_counts():
     return mm_book
 
 def word_search(word):
+    '''
+    Returns a dictionary. Keys are seasons, values are the counts of input word each season.
+    '''
+    word_scores = {}
     cuentas = mad_men_season_counts()
     for season in cuentas.keys():
-        print(f'{word} was mentioned {cuentas[season][word]} times in {season[:2]}.')
+        word_scores[season] = cuentas[season][word]
+    return word_scores
+
+def word_search_df(words):
+    catcher = {}
+    for i in words:
+        catcher[i] = word_search(i)
+    return pd.DataFrame(catcher)
 
 class mm_season_counts:
     def __init__(self):
         self.counts = mad_men_season_counts()
         self.totals = mad_men_season_word_totals()
 
-    def word_search(self, word):
+    def word_searchOLD(self, word):
         for season in self.counts.keys():
             print(f'{word} was mentioned {self.counts[season][word]} times in {season}.')
+    
+    def word_search(self, word):
+        '''
+        Returns a dictionary. Keys are seasons, values are the counts of input word each season.
+        '''
+        word_scores = {}
+        for season in self.counts.keys():
+            word_scores[season] = self.counts[season][word]
+        return word_scores
 
+    def word_search_df(self, words):
+        '''
+        Must be a list! Maybe i should do the *args
+        '''
+        catcher = {}
+        for i in words:
+            catcher[i] = word_search(i)
+        df = pd.DataFrame(catcher)
+        df['SeasonWordCount'] =  pd.Series(self.totals)
+        return df
