@@ -1,26 +1,59 @@
 import os
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tokenize import word_tokenize
 import string
 from collections import Counter
 
-#lets keep the apostrophes. This will make contracts remain. Stupid, since they are stop words
-#i hope it makes it easier to identify those stop words! its not stupid!
-#string.punctuation = string.punctuation.replace("'","")
-
-stopWords = set(stopwords.words('english'))
+stopWords = stopwords.words('english')
+extra_stops = [
+'go',
+'going',
+'got',
+'one',
+'see',
+'say',
+'come',
+'let',
+'tell',
+'would',
+'look',
+'way',
+'really',
+'could',
+'well',
+'yes',
+'us',
+'take',
+'gon',
+'na',
+'back',
+'sure',
+'told',
+'much',
+'two',
+'fine',
+'put',
+'away',
+'else',
+'yeah',
+'get',
+'said',
+'mr',
+]
+stopWords += extra_stops
+stopWords = set(stopWords)
 
 episodes_list = os.listdir('transcripts/')
 episodes_list.sort()
 
 seasons = {
-'s1_episodes' : episodes_list[:13],
-'s2_episodes' : episodes_list[13:26],
-'s3_episodes' : episodes_list[26:39],
-'s4_episodes' : episodes_list[39:52],
-'s5_episodes' : episodes_list[52:64],
-'s6_episodes' : episodes_list[64:77],
-'s7_episodes' : episodes_list[77:],
+'s1' : episodes_list[:13],
+'s2' : episodes_list[13:26],
+'s3' : episodes_list[26:39],
+'s4' : episodes_list[39:52],
+'s5' : episodes_list[52:64],
+'s6' : episodes_list[64:77],
+'s7' : episodes_list[77:],
 }
 
 names = {
@@ -63,6 +96,31 @@ def episode_words(episode_title):
     wordbag = bag_of_words(nopunkt)
     return remove_stopwords(wordbag)
 
+def episode_words_ALL(episode_title):
+    '''
+    Encapsulating function that takes an episode title and returns a cleaned bag of usable words for text mining
+    '''
+    raw = raw_transcript(episode_title)
+    nopunkt = remove_punctuation(raw)
+    wordbag = bag_of_words(nopunkt)
+    return wordbag
+
+def season_words_ALL(season):
+    '''
+    Use the seasons dictionary format 's#'
+    '''
+    titles = seasons[season]
+    season_words = []
+    for title in titles:
+        season_words += episode_words_ALL(title)
+    return len(season_words)
+
+def mad_men_season_word_totals():
+    mm_book = {}
+    for i in seasons.keys():
+        mm_book[i] = season_words_ALL(i)
+    return mm_book
+
 
 def season_words(season):
     '''
@@ -86,12 +144,17 @@ def mad_men_season_counts():
         mm_book[i] = season_word_counts(i)
     return mm_book
 
-'''
-def remove_extra_white(good_transcript):
-    better_transcript = []
-    for sentence in good_transcript:
-        with_space_list = sentence.split(' ')
-        no_space_list = ' '.join([i for i in with_space_list if i != ''])
-        better_transcript.append(no_space_list)
-    return better_transcript
-'''
+def word_search(word):
+    cuentas = mad_men_season_counts()
+    for season in cuentas.keys():
+        print(f'{word} was mentioned {cuentas[season][word]} times in {season[:2]}.')
+
+class mm_season_counts:
+    def __init__(self):
+        self.counts = mad_men_season_counts()
+        self.totals = mad_men_season_word_totals()
+
+    def word_search(self, word):
+        for season in self.counts.keys():
+            print(f'{word} was mentioned {self.counts[season][word]} times in {season}.')
+
